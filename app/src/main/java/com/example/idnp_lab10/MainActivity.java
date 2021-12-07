@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private LocationListener locListenD;
     private String coordenadas = "";
     public TextView datos;
+    public Location lastLocation;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,18 +41,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Location loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
         if (loc != null) {
             Toast.makeText(this, loc.getLatitude() + "\n " + loc.getLongitude(), Toast.LENGTH_SHORT).show();
             coordenadas += loc.getLatitude()+" "+loc.getLongitude()+" "+loc.getAltitude()+"\n";
+            guardar();
+            datos.setText(coordenadas);
+            lastLocation = loc;
         }
 
         locListenD = new DispLocListener();
 
-        //Modificar minTime y minDistance
-        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListenD);
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locListenD);
     }
+
     private void guardar(){
         try {
             OutputStreamWriter archivo = new OutputStreamWriter(openFileOutput("ruta01.txt",Activity.MODE_PRIVATE));
@@ -66,7 +70,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onLocationChanged(@NonNull Location location) {
-            if (location != null) {
+            if (location != null && location.distanceTo(lastLocation) > 100) {
+                lastLocation = location;
                 Toast.makeText(getApplicationContext(), location.getLatitude() + "\n " + location.getLongitude(), Toast.LENGTH_SHORT).show();
                 coordenadas += location.getLatitude()+" "+location.getLongitude()+" "+location.getAltitude()+"\n";
                 guardar();
